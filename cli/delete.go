@@ -39,6 +39,7 @@ func deleteProjectCommand(t *core.Timetrace) *cobra.Command {
 	deleteProject := &cobra.Command{
 		Use:   "project <KEY>",
 		Short: "Delete a project",
+		Long:  "**Syntax:**\n\n```\ntimetrace delete project <KEY>\n```\n\n**Arguments:**\n\n|Argument|Description|\n|-|-|\n|`KEY`|The project key.|\n\n**Flags:**\n|Flag|Short|Description|\n|-|-|-|\n|`--revert`|-r|Restore a deleted project.|\n\n**Example:**\n\nDelete a project called `make-coffee`:\n\n```\ntimetrace delete project make-coffee\n```\n\nRestore the project to its pre-deletion state:\n\n```\ntimetrace delete project make-coffee --revert\n```",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			key := args[0]
@@ -55,9 +56,11 @@ func deleteProjectCommand(t *core.Timetrace) *cobra.Command {
 				Key: key,
 			}
 
-			if !askForConfirmation() {
-				out.Info("Record NOT deleted.")
-				return
+			if !confirmed {
+				if !askForConfirmation() {
+					out.Info("Project NOT deleted.")
+					return
+				}
 			}
 
 			if err := t.BackupProject(key); err != nil {
