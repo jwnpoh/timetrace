@@ -37,7 +37,7 @@ func createProjectCommand(t *core.Timetrace) *cobra.Command {
 			}
 
 			if err := t.SaveProject(project, false); err != nil {
-				out.Err("Failed to create project: %s", err.Error())
+				out.Err("failed to create project: %s", err.Error())
 				return
 			}
 
@@ -50,15 +50,21 @@ func createProjectCommand(t *core.Timetrace) *cobra.Command {
 
 func createRecordCommand(t *core.Timetrace) *cobra.Command {
 	var options startOptions
+	var usage string
+	if t.Config().Use12Hours {
+		usage = "record <PROJECT KEY> {<YYYY-MM-DD>|today|yesterday} <HH:MMPM> <HH:MMPM>"
+	} else {
+		usage = "record <PROJECT KEY> {<YYYY-MM-DD>|today|yesterday} <HH:MM> <HH:MM>"
+	}
 	createRecord := &cobra.Command{
-		Use:   "record <PROJECT KEY> {<YYYY-MM-DD>|today|yesterday} <HH:MM> <HH:MM>",
+		Use:   usage,
 		Short: "Create a new record",
 		Args:  cobra.ExactArgs(4),
 		Run: func(cmd *cobra.Command, args []string) {
 			key := args[0]
 			project, err := t.LoadProject(key)
 			if err != nil {
-				out.Err("Failed to get project: %s", key)
+				out.Err("failed to get project: %s", key)
 				return
 			}
 
@@ -83,13 +89,13 @@ func createRecordCommand(t *core.Timetrace) *cobra.Command {
 			end = t.Formatter().CombineDateAndTime(date, end)
 
 			if end.Before(start) {
-				out.Err("end time is before start time!")
+				out.Err("end time is before start time")
 				return
 			}
 
 			now := time.Now()
 			if now.Before(start) || now.Before(end) {
-				out.Err("provided record happens in the future!")
+				out.Err("provided record happens in the future")
 				return
 			}
 
@@ -102,7 +108,7 @@ func createRecordCommand(t *core.Timetrace) *cobra.Command {
 
 			collides, err := t.RecordCollides(record)
 			if err != nil {
-				out.Err("Error on check if record collides: %s", err.Error())
+				out.Err("error on check if record collides: %s", err.Error())
 				return
 			}
 			if collides {
@@ -110,11 +116,11 @@ func createRecordCommand(t *core.Timetrace) *cobra.Command {
 			}
 
 			if err := t.SaveRecord(record, false); err != nil {
-				out.Err("Failed to create record: %s", err.Error())
+				out.Err("failed to create record: %s", err.Error())
 				return
 			}
 
-			out.Success("Created record %s in project %s", t.Formatter().TimeString(record.Start), key)
+			out.Success("created record %s in project %s", t.Formatter().TimeString(record.Start), key)
 		},
 	}
 

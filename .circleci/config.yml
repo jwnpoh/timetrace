@@ -1,9 +1,12 @@
 version: 2.1
 
 executors:
+  python-container:
+   docker:
+    - image: cimg/python:3.9.7
   go-container:
     docker:
-      - image: circleci/golang:1.16
+      - image: cimg/go:1.17.1
     environment:
       GO111MODULE: "on"
       GOPROXY: "https://proxy.golang.org"
@@ -24,30 +27,23 @@ jobs:
           command: "! go fmt -l . | read"
       - run:
           name: Check Go imports
-          command: "! goimports -l . | read"
+          command: "result=$(! goimports -l .); [ -z $result ] || (echo $result; exit 1)"
 
   # Run all Go tests.
   go-test:
     executor: go-container
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - gomodules-v1-{{ checksum "go.mod" }}
-            - gomodules-v1-
       - run:
           name: Download dependencies
           command: go mod download
-      - save_cache:
-          key: gomodules-v1-{{ checksum "go.mod" }}
-          paths: /go/pkg
       - run:
           name: Run all tests
           command: go test -v ./...
 
   # Verify that the requirements for creating a new release are met.
   pre-release-check:
-    executor: go-container
+    executor: python-container
     steps:
       - checkout
       - run:
@@ -59,16 +55,9 @@ jobs:
     executor: go-container
     steps:
       - checkout
-      - restore_cache:
-          keys:
-            - gomodules-v1-{{ checksum "go.mod" }}
-            - gomodules-v1-
       - run:
           name: Download dependencies
           command: go mod download
-      - save_cache:
-          key: gomodules-v1-{{ checksum "go.mod" }}
-          paths: /go/pkg
       - run: mkdir -p /tmp/artifacts
       - run:
           name: Build and pack timetrace for Linux

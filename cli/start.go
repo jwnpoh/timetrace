@@ -27,6 +27,12 @@ func startCommand(t *core.Timetrace) *cobra.Command {
 			projectKey := args[0]
 			tags := args[1:]
 
+			// Limit number of tags to 3
+			if len(tags) > 3 {
+				out.Err("Failed to start tracking: At most 3 tags are allowed, got %v tags", len(tags))
+				return
+			}
+
 			isBillable := options.isBillable
 
 			// If there is a default configuration for the project key, use that configuration.
@@ -40,12 +46,12 @@ func startCommand(t *core.Timetrace) *cobra.Command {
 
 			tagNames, err := extractTagNames(tags)
 			if err != nil {
-				out.Err("Failed to start tracking: %s", err.Error())
+				out.Err("failed to start tracking: %s", err.Error())
 				return
 			}
 
 			if err := t.Start(projectKey, isBillable, tagNames); err != nil {
-				out.Err("Failed to start tracking: %s", err.Error())
+				out.Err("failed to start tracking: %s", err.Error())
 				return
 			}
 
